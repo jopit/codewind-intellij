@@ -16,11 +16,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.PairFunction;
 import org.eclipse.codewind.intellij.core.CodewindApplication;
 import org.eclipse.codewind.intellij.core.Logger;
 import org.eclipse.codewind.intellij.ui.tasks.RemoveProjectTask;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 
 import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
@@ -60,9 +62,37 @@ public class RemoveProjectAction extends AnAction {
 
         String title = message("UnbindActionTitle");
         String message = message("UnbindActionMessage", application.name);
-        int response = Messages.showConfirmationDialog(tree, message, title, Messages.OK_BUTTON, Messages.CANCEL_BUTTON);
-        if (response == Messages.OK) {
-            ProgressManager.getInstance().run(new RemoveProjectTask(application));
-        }
+        String checkboxText = "Close project and delete from filesystem?";
+
+        final int CANCEL = 0;
+        final int OK_AND_DELETE = 1;
+        final int OK_NO_DELETE = 2;
+
+        PairFunction<? super Integer, ? super JCheckBox, Integer> exitFn = (exitCode, cb) -> {
+            System.out.println("*** exitCode: " + exitCode);
+            if (exitCode == -1)
+                // closed via close button in dialog title
+                return CANCEL;
+            if (exitCode == 1)
+                // closed via cancel button
+                return CANCEL;
+            if (cb.isSelected())
+                return OK_AND_DELETE;
+            return OK_NO_DELETE;
+        };
+
+        int response = Messages.showCheckboxMessageDialog(message, title,
+                new String[]{Messages.OK_BUTTON, Messages.CANCEL_BUTTON},
+                checkboxText,
+                false,
+                1,
+                1,
+                Messages.getQuestionIcon(),
+                exitFn);
+
+        System.out.println("*** response: " + response);
+        if (response == CANCEL)
+            return;
+        // ProgressManager.getInstance().run(new RemoveProjectTask(application))
     }
 }
