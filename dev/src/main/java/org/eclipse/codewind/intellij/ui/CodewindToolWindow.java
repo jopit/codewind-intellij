@@ -29,10 +29,7 @@ import org.eclipse.codewind.intellij.core.CodewindApplication;
 import org.eclipse.codewind.intellij.core.CoreUtil;
 import org.eclipse.codewind.intellij.core.Logger;
 import org.eclipse.codewind.intellij.core.cli.InstallStatus;
-import org.eclipse.codewind.intellij.core.connection.CodewindConnection;
-import org.eclipse.codewind.intellij.core.connection.ConnectionEnv;
-import org.eclipse.codewind.intellij.core.connection.LocalConnection;
-import org.eclipse.codewind.intellij.core.connection.RemoteConnection;
+import org.eclipse.codewind.intellij.core.connection.*;
 import org.eclipse.codewind.intellij.core.console.SocketConsole;
 import org.eclipse.codewind.intellij.ui.actions.AddExistingProjectAction;
 import org.eclipse.codewind.intellij.ui.actions.CloseAllLogsAction;
@@ -105,7 +102,11 @@ public class CodewindToolWindow extends JBPanel<CodewindToolWindow> {
 
         installCodewindAction = new InstallCodewindAction(this::expandLocalTree);
         updateCodewindAction = new UpdateCodewindAction(this::expandLocalTree);
-        uninstallCodewindAction = new UninstallCodewindAction(this::expandLocalTree);
+        uninstallCodewindAction = new UninstallCodewindAction(() -> {
+            ConnectionManager.getManager().getLocalConnection().refreshInstallStatus();
+            CoreUtil.updateAll();
+
+        });
         startCodewindAction = new StartCodewindAction(this::expandLocalTree);
         stopCodewindAction = new StopCodewindAction(this::expandLocalTree);
 
