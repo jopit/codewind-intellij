@@ -19,7 +19,9 @@ import com.intellij.ui.content.ContentFactory;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 import org.eclipse.codewind.intellij.core.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,6 +40,12 @@ public class CodewindWebView extends JBPanel<CodewindWebView> {
         }
     }
 
+    public class ClickHandler {
+        public void onClick() {
+            System.out.println("Link clicked, project = " + project.getName());
+        }
+    }
+
     private final Project project;
 
     public CodewindWebView(Project project) {
@@ -51,8 +59,15 @@ public class CodewindWebView extends JBPanel<CodewindWebView> {
         Platform.runLater(() -> {
             try {
                 WebView webView = new WebView();
+                WebEngine engine = webView.getEngine();
+
+                JSObject window = (JSObject) engine.executeScript("window");
+                window.setMember("handler", new ClickHandler());
+
                 panel.setScene(new Scene(webView));
-                webView.getEngine().load("https://www.ibm.com/");
+                engine.loadContent("<html><a href=\"\" onclick=\"handler.onClick()\">Click here to test</a></html>");
+
+                // engine.load("https://www.ibm.com/");
             } catch (Exception e) {
                 Logger.logWarning(e);
             }
