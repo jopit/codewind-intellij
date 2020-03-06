@@ -12,8 +12,10 @@
 package org.eclipse.codewind.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.util.ResourceUtil;
 
 import javax.swing.*;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,5 +46,12 @@ public class IconCache {
             }
             return icon;
         }
+    }
+
+    public static URL getUrl(String path) {
+        int pos = path.lastIndexOf('/');
+        String basePath = path.substring(0, pos);
+        String fileName = path.substring(pos + 1);
+        return ResourceUtil.getResource(IconCache.class, basePath, fileName);
     }
 }

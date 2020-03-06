@@ -9,24 +9,31 @@
  *     IBM Corporation - initial API and implementation
  *******************************************************************************/
 
-package org.eclipse.codewind.intellij.ui;
+package org.eclipse.codewind.intellij.ui.webview;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.util.ResourceUtil;
 import javafx.application.Platform;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import javafx.util.Pair;
 import netscape.javascript.JSObject;
 import org.eclipse.codewind.intellij.core.Logger;
+import org.eclipse.codewind.intellij.ui.IconCache;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.awt.*;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class CodewindWebView extends JBPanel<CodewindWebView> {
 
@@ -40,9 +47,11 @@ public class CodewindWebView extends JBPanel<CodewindWebView> {
         }
     }
 
+    private static int count;
     public class ClickHandler {
         public void onClick() {
-            System.out.println("Link clicked, project = " + project.getName());
+            count += 1;
+            System.out.println(String.format("*** click %d, project = %s", count, project.getName()));
         }
     }
 
@@ -60,17 +69,37 @@ public class CodewindWebView extends JBPanel<CodewindWebView> {
             try {
                 WebView webView = new WebView();
                 WebEngine engine = webView.getEngine();
-
-                JSObject window = (JSObject) engine.executeScript("window");
-                window.setMember("handler", new ClickHandler());
-
+                displayOnClickSample(engine);
                 panel.setScene(new Scene(webView));
-                engine.loadContent("<html><a href=\"\" onclick=\"handler.onClick()\">Click here to test</a></html>");
-
-                // engine.load("https://www.ibm.com/");
             } catch (Exception e) {
                 Logger.logWarning(e);
             }
         });
+    }
+
+    private void displayImageSample(WebEngine engine) {
+        URL logoURL = IconCache.getUrl(IconCache.ICONS_THEMELESS_CODEWIND_SVG);
+        System.out.println("*** log url = " + logoURL);
+        String content = "<img id=\"logo\" alt=\"Codewind Logo\" src=\"%s\"/>";
+        engine.loadContent(String.format(content, logoURL));
+    }
+
+    private void displayIBM(WebEngine engine) {
+        engine.load("https://www.ibm.com/");
+    }
+
+    private void displayOnClickSample(WebEngine engine) throws Exception {
+        engine.documentProperty().addListener((observable, oldValue, newValue) -> {
+            JSObject window = (JSObject) engine.executeScript("window");
+            window.setMember("codewind", new ClickHandler());
+        });
+
+        Path tmpfile = Files.createTempFile("cw-", ".html");
+        System.out.println("*** tmpfile = " + tmpfile);
+        String content = "<html><a href=\"\" title=\"Open the Codewind view\" onclick=\"codewind.onClick()\">Click here to test</a></html>";
+        Files.write(tmpfile, content.getBytes("UTF-8"));
+        tmpfile.toFile().deleteOnExit();
+
+        engine.load(tmpfile.toUri().toURL().toString());
     }
 }

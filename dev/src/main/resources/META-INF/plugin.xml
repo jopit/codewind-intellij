@@ -50,7 +50,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <toolWindow id="Codewind" anchor="left" secondary="true" icon="/META-INF/pluginIcon13x13.svg"
                     factoryClass="org.eclipse.codewind.intellij.ui.WindowToolFactory"/>
-        <toolWindow id="CodewindWebView" anchor="left" secondary="true" icon="/META-INF/pluginIcon13x13.svg" factoryClass="org.eclipse.codewind.intellij.ui.CodewindWebView$Factory"/>
+        <toolWindow id="CodewindWebView" anchor="left" secondary="true" icon="/META-INF/pluginIcon13x13.svg"
+                    factoryClass="org.eclipse.codewind.intellij.ui.webview.CodewindWebView$Factory"/>
 
         <!-- <moduleType id="CODEWIND_MODULE" implementationClass="org.eclipse.codewind.intellij.ui.module.CodewindModuleType" /> -->
         <moduleBuilder builderClass="org.eclipse.codewind.intellij.ui.module.CodewindModuleBuilder"/>
