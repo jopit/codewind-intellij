@@ -19,7 +19,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.JBScrollPane;
@@ -30,6 +35,7 @@ import org.eclipse.codewind.intellij.core.CodewindManager;
 import org.eclipse.codewind.intellij.core.CoreUtil;
 import org.eclipse.codewind.intellij.core.Logger;
 import org.eclipse.codewind.intellij.core.cli.InstallStatus;
+import org.eclipse.codewind.intellij.core.cli.ProjectUtil;
 import org.eclipse.codewind.intellij.core.connection.CodewindConnection;
 import org.eclipse.codewind.intellij.core.connection.ConnectionEnv;
 import org.eclipse.codewind.intellij.core.connection.LocalConnection;
@@ -42,6 +48,7 @@ import org.eclipse.codewind.intellij.ui.tree.CodewindTreeModel;
 import org.eclipse.codewind.intellij.ui.tree.CodewindTreeNodeCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.BorderLayout;
 import java.awt.Component;
@@ -116,8 +123,7 @@ public class CodewindToolWindow extends JBPanel<CodewindToolWindow> {
         debugAction = new AnAction("* debug *") {
             @Override
             public void actionPerformed(@NotNull AnActionEvent e) {
-                String[] ids = ActionManager.getInstance().getActionIds("");
-                Arrays.stream(ids).sorted().forEach(System.out::println);
+                expandAllTreesInAllWindows();
             }
         };
 
@@ -185,6 +191,27 @@ public class CodewindToolWindow extends JBPanel<CodewindToolWindow> {
             tree.expandPath(new TreePath(root));
         } else {
             tree.expandPath(new TreePath(new Object[]{root, child}));
+        }
+    }
+
+    public void expandAll() {
+        final int count = tree.getRowCount();
+        for (int i = 0; i < count; i++) {
+            tree.expandRow(i);
+        }
+    }
+
+    public static void expandAllTreesInAllWindows() {
+        for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+            ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(CodewindToolWindow.ID);
+            if (toolWindow != null && toolWindow.isAvailable()) {
+                for (Content content : toolWindow.getContentManager().getContents()) {
+                    JComponent component = content.getComponent();
+                    if (component instanceof CodewindToolWindow) {
+                        ((CodewindToolWindow)component).expandAll();
+                    }
+                }
+            }
         }
     }
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.Messages;
 import org.eclipse.codewind.intellij.core.connection.CodewindConnection;
+import org.eclipse.codewind.intellij.ui.CodewindToolWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -236,6 +237,7 @@ public class CoreUtil {
         if (toolWindowHandler != null) {
             invokeLater(toolWindowHandler::updateAll);
         }
+        invokeLater(CodewindToolWindow::expandAllTreesInAllWindows);
     }
 
     /**
