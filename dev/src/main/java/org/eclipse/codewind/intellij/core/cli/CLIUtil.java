@@ -214,4 +214,21 @@ public class CLIUtil {
 		Logger.log(String.format("Result of the cwctl '%s' command: \n%s", CoreUtil.formatString(command, " "), Optional.ofNullable(result.getOutput()).orElse("<empty>")));
 	}
 
+    public static String getErrorKey(ProcessResult result) {
+        String error = result.getError();
+        if (error == null || error.isEmpty())
+            return null;
+        error = error.substring(error.indexOf('{'));
+        if (error.isEmpty())
+            return null;
+        try {
+            JSONObject obj = new JSONObject(error);
+            if (obj.has(ERROR_KEY)) {
+                    return obj.getString(ERROR_KEY);
+            }
+        } catch (JSONException e) {
+            // Ignore
+        }
+        return null;
+    }
 }

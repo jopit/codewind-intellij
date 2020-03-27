@@ -11,8 +11,11 @@
 
 package org.eclipse.codewind.intellij.core.cli;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.ui.Messages;
 import org.eclipse.codewind.intellij.core.CodewindManager;
+import org.eclipse.codewind.intellij.core.CoreUtil;
 import org.eclipse.codewind.intellij.core.Logger;
 import org.eclipse.codewind.intellij.core.ProcessHelper;
 import org.eclipse.codewind.intellij.core.ProcessHelper.ProcessResult;
@@ -81,12 +84,31 @@ public class InstallUtil {
         }
     }
 
+    private static String[] globalStartOptions = null;
+
     public static ProcessResult startCodewind(String version, ProgressIndicator indicator) throws IOException, TimeoutException, JSONException {
         indicator.setIndeterminate(true);
+        ProcessResult result = doStartCodewind(version);
+        if (result.getExitValue() != 0 && "sec_keyring".equals(CLIUtil.getErrorKey(result)) && globalStartOptions == null) {
+            int[] response = {Messages.NO};
+            ApplicationManager.getApplication().invokeAndWait(() -> {
+                response[0] = Messages.showYesNoDialog("Can't access secure keyring.  Do you want to start Codewind without a secure keyring?", "Codewind", Messages.getQuestionIcon());
+            });
+            if (response[0] == Messages.YES) {
+                globalStartOptions = new String[] {
+                        "--insecureKeyring"
+                };
+                result = doStartCodewind(version);
+            }
+        }
+        return result;
+    }
+
+    private static ProcessResult doStartCodewind(String version) throws IOException, TimeoutException, JSONException {
         Process process = null;
         try {
             CodewindManager.getManager().setInstallerStatus(CodewindManager.InstallerStatus.STARTING);
-            process = CLIUtil.runCWCTL(null, START_CMD, new String[]{TAG_OPTION, version});
+            process = CLIUtil.runCWCTL(globalStartOptions, START_CMD, new String[]{TAG_OPTION, version});
             ProcessResult result = ProcessHelper.waitForProcess(process, 500, 240);
             return result;
         } finally {
